@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const privateMessageSchema = new mongoose.Schema({
+const djMessageSchema = new mongoose.Schema({
     from: {
         type: String,
         required: [true, "From is required"],
@@ -22,4 +22,4 @@ const privateMessageSchema = new mongoose.Schema({
     }
 })
 
-export const PrivateMessage = mongoose.model("PrivateMessage", privateMessageSchema)
+export const DjMessage = mongoose.model("DjMessage", djMessageSchema)

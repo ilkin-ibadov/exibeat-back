@@ -13,7 +13,6 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 const users = {};
-const rooms = {};
 
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
@@ -35,20 +34,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('join_room', (room) => {
-        socket.join(room);
-        rooms[room] = rooms[room] || [];
-        rooms[room].push(socket.id);
-        console.log(`${users[socket.id]} joined room ${room}`);
-    });
-
-    socket.on('send_room_message', ({ room, message }) => {
-        io.to(room).emit('receive_room_message', {
-            from: users[socket.id],
-            message,
-        });
-    });
-
     socket.on('disconnect', () => {
         console.log(`${users[socket.id]} disconnected`);
         delete users[socket.id];
@@ -57,10 +42,6 @@ io.on('connection', (socket) => {
 
 app.get('/users', (req, res) => {
     res.json(Object.values(users));
-});
-
-app.get('/rooms', (req, res) => {
-    res.json(Object.keys(rooms));
 });
 
 server.listen(3000, () => {
