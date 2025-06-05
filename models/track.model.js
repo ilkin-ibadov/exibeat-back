@@ -1,30 +1,13 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose'
 
 const trackSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: [true, "Title is required"],
-        trim: true
-    },
-    producer: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Producer",
-        required: [true, "Producer is required"],
-    },
-    thumbnail: {
-        type: String,
-        required: [true, "Thumbnail is required"],
-        trim: true
-    },
-    categories: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Category",
-        required: [true, "Categories are required"]
-    }],
-    timestamp: {
-        type: Date,
-        default: Date.now
-    }
-})
+  title: { type: String, required: true },
+  producer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  dj: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  submissionDate: { type: Date, default: Date.now },
+  hasMessage: { type: Boolean, default: false },
+  feedbackSent: { type: Boolean, default: false }
+});
 
-export const Track = mongoose.model("Track", trackSchema)
+const Track = mongoose.model('Track', trackSchema);
+export default Track;

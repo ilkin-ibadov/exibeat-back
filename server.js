@@ -1,49 +1,68 @@
-import dotenv from 'dotenv'
-dotenv.config()
+// server.js
 import express from 'express'
+import mongoose from 'mongoose'
 import http from 'http'
 import { Server } from 'socket.io'
-import cors from 'cors'
+import dotenv from 'dotenv';
+dotenv.config();
+import Message from './models/message.model.js';
+import cors from 'cors';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3001',
+  credentials: true
+}));
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
+
 app.use(express.json());
 
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
-
-const users = {};
-
+// Socket.io connection
 io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.id}`);
+  console.log('New client connected:', socket.id);
 
-    socket.on('register', (username) => {
-        users[socket.id] = username;
-        console.log(`Registered ${username}`);
-    });
+  socket.on('join', (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined their room`);
+  });
 
-    socket.on('send_private_message', ({ to, message }) => {
-        const targetSocketId = Object.keys(users).find(
-            (key) => users[key] === to
-        );
-        if (targetSocketId) {
-            io.to(targetSocketId).emit('receive_private_message', {
-                from: users[socket.id],
-                message,
-            });
-        }
-    });
+  socket.on('chat-message', ({ to, from, trackId, content }) => {
+    const message = {
+      from,
+      content,
+      timestamp: new Date(),
+      trackId,
+    };
 
-    socket.on('disconnect', () => {
-        console.log(`${users[socket.id]} disconnected`);
-        delete users[socket.id];
-    });
+    io.to(to).emit('chat-message', message);
+
+    // persist message in DB
+    Message.create({ sender: from, recipient: to, content, track: trackId });
+
+    console.log(`Message from ${from} to ${to}: ${content}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
 });
 
-app.get('/users', (req, res) => {
-    res.json(Object.values(users));
-});
+app.set('io', io);
 
-server.listen(3000, () => {
-    console.log('Server listening on port 3000');
+// Routes
+import authRoutes from './routes/auth.route.js';
+import trackRoutes from './routes/track.route.js'
+import messageRoutes from './routes/message.route.js'
+
+app.use('/api/auth', authRoutes);
+app.use('/api/tracks', trackRoutes);
+app.use('/api/messages', messageRoutes);
+
+// MongoDB & Start
+mongoose.connect(process.env.MONGO_URI).then(() => {
+  console.log('MongoDB connected');
+  server.listen(3000, () => console.log('Server running on port 3000'));
 });
