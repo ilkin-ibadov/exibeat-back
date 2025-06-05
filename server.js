@@ -10,7 +10,7 @@ import cors from 'cors';
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'https://localhost:3000',
   credentials: true
 }));
 const server = http.createServer(app);
